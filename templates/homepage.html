@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:display="http://www.w3.org/1999/xhtml" xmlns:margin-right="http://www.w3.org/1999/xhtml"
+      xmlns:width="http://www.w3.org/1999/xhtml" xmlns:background-color="http://www.w3.org/1999/xhtml"
+      xmlns:align-self="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Sirius Geri Dönüşüm</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="static/bootstrap/jquery.min.js"></script>
+    <script src="static/bootstrap/bootstrap.min.js"></script>
+</head>
+
+<body>
+<h1 style="color: white;background-color: green;text-align: center"> Sirius Geri Dönüşüm</h1>
+<h3 align="left" style="background-color: #2aabd2"> HOŞGELDİNİZ</h3>
+<img src="./static/qrcode.png" align="right" width="50" height="50">
+
+
+<div class="progress" style="alignment: bottom;width: 100px">
+    <div class="progress-bar progress-bar-{{ progress_color }} progress-bar-striped" role="progressbar"
+         aria-valuenow={{ progress_value }} aria-valuemin="0" aria-valuemax="100" style={{ progress_style }}>
+        {{ progress_label }}
+    </div>
+</div>
+
+
+{##}
+{#
+<div class="progress">#}
+    {#
+    <div class="progress-bar progress-bar-warning progress-bar-striped" role="progressbar" #}
+         {# aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width:75%">#}
+        {# 75% Dolu (warning)#}
+        {#
+    </div>
+    #}
+    {#
+</div>
+#}
+{##}
+{#
+<div class="progress">#}
+    {#
+    <div class="progress-bar progress-bar-danger progress-bar-striped" role="progressbar" #}
+         {# aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width:100%">#}
+        {# 100% Dolu (danger)#}
+        {#
+    </div>
+    #}
+    {#
+</div>
+#}
+
+</body>
+</html>
