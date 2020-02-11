@@ -1,13 +1,15 @@
 import qrcode
 import requests
 from flask import Flask, render_template
+from time import sleep
+from picamera import PiCamera
 
 app = Flask(__name__)
 
-
 r = requests.post("http://localhost:8080/rest/automats/addAutomat",
-                  json={"id":"automat1","capacity": 100, "isActive": "true", "numberOfBottles": 0,
-                        "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}}  )
+                  json={"id": "automat1", "capacity": 100, "isActive": "true", "numberOfBottles": 0,
+                        "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
+
 
 @app.route('/')
 def welcome_page():
@@ -49,9 +51,9 @@ def acceptBottlePage():
     r = requests.get("http://localhost:8080/rest/automats/automat1")
     numOfBottles = r.json()['numberOfBottles']
     capacity = r.json()['capacity']
-    if (capacity == 0 ):
+    if (capacity == 0):
         return "DOLDU"
-    numOfBottles = numOfBottles+ 1
+    numOfBottles = numOfBottles + 1
 
     if (numOfBottles == 3):
         r1 = requests.post("http://localhost:8080/rest/automats/addAutomat",
@@ -78,7 +80,21 @@ def acceptBottlePage():
                            json={"id": "automat1", "capacity": capacity, "isActive": "true",
                                  "numberOfBottles": numOfBottles,
                                  "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    return str(numOfBottles)
+    return welcome_page()
+
+
+@app.route('/verifyBottle')
+def verifyBottle():
+    camera = PiCamera()
+    camera.start_preview()
+    sleep(2)
+    camera.capture('./static/temp.png')
+    camera.stop_preview()
+    # model.verify('./static/temp.jpg') here will be adapted after model is created
+    camera.close()
+
+    return acceptBottlePage()
+
 
 if __name__ == '__main__':
     app.run()
