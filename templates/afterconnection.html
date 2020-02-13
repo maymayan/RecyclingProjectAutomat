@@ -6,12 +6,48 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <script src="../static/bootstrap/jquery.min.js"></script>
     <script src="../static/bootstrap/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
+    <script src="../static/bootstrap/animation.js"></script>
+    <style>
+
+floating {
+  position: relative;
+  top: 12px;
+  display: inline-block;
+  -webkit-animation: bounce 0.3s ease infinite alternate;
+  font-size: 16px;
+  color: #123;
+  text-align: center;
+  align-content: center;
+  align-items: center;
+}
+.center {
+  text-align: center;
+}
+
+@-webkit-keyframes bounce {
+  100% {
+    top: -12px;
+  }
+}
+
+
+
+
+
+
+    </style>
+
+
 </head>
 
 <body>
-<h1 style="color: ;text-align: center"> Hoşgeldiniz, {{ user_name }} {{ user_surname }}</h1>
-<p style="color: green;text-align: center">Güncel Bakiyeniz: {{user_balance}}</p>
-<h3 style="color: ;text-align: center"> Lütfen şişenizin barkodunu okutunuz...</h3>
-
+<h1 style="color: green;text-align: center;"> Hoşgeldiniz, {{ user_name }} {{ user_surname }}</h1>
+<p style="text-align: center; font-size: 14px;">Güncel Bakiyeniz: {{user_balance}}</p>
+<br>
+<div class="center">
+    <img src="../static/tenor.gif" width="80px" height="40px" align="center">
+    <floating> Lütfen şişenizin barkodunu okutunuz...</floating>
+</div>
 </body>
 </html>
