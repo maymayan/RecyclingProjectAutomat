@@ -1,7 +1,9 @@
+from time import sleep
+
 import qrcode
 import requests
 from flask import Flask, render_template
-from time import sleep
+
 from picamera import PiCamera
 
 app = Flask(__name__)
@@ -9,21 +11,21 @@ app = Flask(__name__)
 r = requests.post("http://localhost:8080/rest/automats/addAutomat",
                   json={"id": "automat1", "capacity": 100, "isActive": "true", "numberOfBottles": 0,
                         "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
+qr = qrcode.QRCode(
+    version=1,
+    error_correction=qrcode.constants.ERROR_CORRECT_L,
+    box_size=10,
+    border=4,
+)
+qr.add_data('')
+qr.make(fit=True)
+
+img = qr.make_image(fill_color="black", back_color="white")
+img.save("./static/qrcode.png")
 
 
 @app.route('/')
 def welcome_page():
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data('')
-    qr.make(fit=True)
-
-    img = qr.make_image(fill_color="black", back_color="white")
-    img.save("./static/qrcode.png")
     r = requests.get("http://localhost:8080/rest/automats/automat1")
 
     value = 100 - r.json()['capacity']
@@ -42,11 +44,15 @@ def welcome_page():
                            progress_color=color)
 
 
-#
-# @app.route('/connected/{username}')
-# def connection_page():
+@app.route('/connected/<usermail>')
+def connection_page(usermail):
+    user = requests.get("http://localhost:8080/rest/users/"+usermail)
+    name = user.json()['name']
+    surname = user.json()['surname']
+    balance = user.json()['balance']
+    return render_template('afterconnection.html',user_name = name, user_surname = surname, user_balance = balance)
 
-@app.route('/acceptedBottle')
+
 def acceptBottlePage():
     r = requests.get("http://localhost:8080/rest/automats/automat1")
     numOfBottles = r.json()['numberOfBottles']
@@ -90,7 +96,7 @@ def verifyBottle():
     sleep(2)
     camera.capture('./static/temp.png')
     camera.stop_preview()
-    # model.verify('./static/temp.jpg') here will be adapted after model is created
+    # model.verify('../static/temp.jpg') here will be adapted after model is created
     camera.close()
 
     return acceptBottlePage()
