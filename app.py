@@ -27,7 +27,7 @@ img.save("./static/qrcode.png")
 @app.route('/')
 def welcome_page():
     r = requests.get("http://localhost:8080/rest/automats/automat1")
-
+    address = r.json()['location']
     value = 100 - r.json()['capacity']
     color = ""
     if (value == 25):
@@ -41,7 +41,10 @@ def welcome_page():
     return render_template('homepage.html', progress_value=str(int(value)),
                            progress_style="width:" + str(int(value)) + "%",
                            progress_label="%" + str(int(value)) + " dolu",
-                           progress_color=color)
+                           progress_color=color,
+                           address_neighborhood=address['neighborhood'], address_street=address['street'],
+                           address_no=address[
+                               'no'])
 
 
 @app.route('/connected/<usermail>')
