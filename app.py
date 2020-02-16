@@ -2,6 +2,7 @@ from time import sleep
 
 import qrcode
 import requests
+import RPi.GPIO as GPIO
 from flask import Flask, render_template
 
 from picamera import PiCamera
@@ -22,6 +23,8 @@ qr.make(fit=True)
 
 img = qr.make_image(fill_color="black", back_color="white")
 img.save("./static/qrcode.png")
+
+scannedBottleBarcode = ""
 
 
 @app.route('/')
@@ -49,11 +52,37 @@ def welcome_page():
 
 @app.route('/connected/<usermail>')
 def connection_page(usermail):
-    user = requests.get("http://localhost:8080/rest/users/"+usermail)
+    user = requests.get("http://localhost:8080/rest/users/" + usermail)
     name = user.json()['name']
     surname = user.json()['surname']
     balance = user.json()['balance']
-    return render_template('afterconnection.html',user_name = name, user_surname = surname, user_balance = balance)
+    return render_template('afterconnection.html', user_name=name, user_surname=surname, user_balance=balance)
+
+
+@app.route('/scannedBarcode/<barcode>')
+def barcodeScanned(barcode):
+    scannedBottleBarcode = barcode
+    # request to bottle repo to have bottle's info
+    return "scanned"
+@app.route('/opencover')
+def openTheCover():
+    servoPIN = 6
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(2.5)
+    p.ChangeDutyCycle(12.5)
+
+@app.route('/closecover')
+def closeTheCover():
+    servoPIN = 6
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(12.5)
+    p.ChangeDutyCycle(2.5)
+
+
 
 
 def acceptBottlePage():
@@ -99,10 +128,14 @@ def verifyBottle():
     sleep(2)
     camera.capture('./static/temp.png')
     camera.stop_preview()
-    # model.verify('../static/temp.jpg') here will be adapted after model is created
+    verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
+    if (verified):
+        acceptBottlePage()
+    else:
+        return "Kabul edilmedi"
     camera.close()
 
-    return acceptBottlePage()
+    acceptBottlePage()
 
 
 if __name__ == '__main__':
