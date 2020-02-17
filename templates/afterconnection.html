@@ -10,31 +10,27 @@
     <script src="../static/bootstrap/animation.js"></script>
     <style>
 
-floating {
-  position: relative;
-  top: 12px;
-  display: inline-block;
-  -webkit-animation: bounce 0.3s ease infinite alternate;
-  font-size: 16px;
-  color: #123;
-  text-align: center;
-  align-content: center;
-  align-items: center;
-}
-.center {
-  text-align: center;
-}
+        floating {
+            position: relative;
+            top: 12px;
+            display: inline-block;
+            -webkit-animation: bounce 0.3s ease infinite alternate;
+            font-size: 16px;
+            color: #123;
+            text-align: center;
+            align-content: center;
+            align-items: center;
+        }
 
-@-webkit-keyframes bounce {
-  100% {
-    top: -12px;
-  }
-}
+        .center {
+            text-align: center;
+        }
 
-
-
-
-
+        @-webkit-keyframes bounce {
+            100% {
+                top: -12px;
+            }
+        }
 
 
     </style>
@@ -44,7 +40,7 @@ floating {
 
 <body>
 <h1 style="color: green;text-align: center;"> Hoşgeldiniz, {{ user_name }} {{ user_surname }}</h1>
-<p style="text-align: center; font-size: 14px;">Güncel Bakiyeniz: {{user_balance}}</p>
+<p style="text-align: center; font-size: 14px;">Güncel Bakiyeniz: {{ user_balance }}</p>
 <br>
 <div class="center">
     <img src="../static/tenor.gif" width="80px" height="40px" align="center">
