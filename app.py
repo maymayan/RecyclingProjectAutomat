@@ -1,10 +1,9 @@
 from time import sleep
 
+import RPi.GPIO as GPIO
 import qrcode
 import requests
-import RPi.GPIO as GPIO
 from flask import Flask, render_template
-
 from picamera import PiCamera
 
 app = Flask(__name__)
@@ -20,7 +19,7 @@ qr = qrcode.QRCode(
 )
 qr.add_data('')
 qr.make(fit=True)
-
+GPIO.cleanup()
 img = qr.make_image(fill_color="black", back_color="white")
 img.save("./static/qrcode.png")
 
@@ -63,26 +62,51 @@ def connection_page(usermail):
 def barcodeScanned(barcode):
     scannedBottleBarcode = barcode
     # request to bottle repo to have bottle's info
-    return "scanned"
-@app.route('/opencover')
-def openTheCover():
+    # r = requests.get('http://localhost:5000/opencover/'+barcode)
+    openfirst()
+    sleep(1)
+    return render_template('afterbarcodescanned.html')
+
+
+def openfirst():
+    sleep(1)
     servoPIN = 6
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servoPIN, GPIO.OUT)
     p = GPIO.PWM(servoPIN, 50)
     p.start(2.5)
     p.ChangeDutyCycle(12.5)
+    sleep(1)
+
+
+@app.route('/opencover')
+def openTheCover():
+    sleep(1)
+    servoPIN = 6
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(2.5)
+    p.ChangeDutyCycle(12.5)
+    sleep(1)
+    GPIO.cleanup()
+    sleep(1)
+    return ""
+
 
 @app.route('/closecover')
 def closeTheCover():
+    sleep(1)
     servoPIN = 6
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servoPIN, GPIO.OUT)
     p = GPIO.PWM(servoPIN, 50)
     p.start(12.5)
     p.ChangeDutyCycle(2.5)
-
-
+    sleep(1)
+    GPIO.cleanup()
+    sleep(1)
+    return verifyBottle()
 
 
 def acceptBottlePage():
@@ -135,7 +159,7 @@ def verifyBottle():
         return "Kabul edilmedi"
     camera.close()
 
-    acceptBottlePage()
+    return acceptBottlePage()
 
 
 if __name__ == '__main__':
