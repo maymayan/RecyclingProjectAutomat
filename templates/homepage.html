@@ -5,15 +5,57 @@
     <meta charset="UTF-8">
     <title>Sirius Geri Dönüşüm</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <script src="static/bootstrap/jquery.min.js"></script>
-    <script src="static/bootstrap/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
+    <script src="../static/bootstrap/jquery.min.js"></script>
+    <script src="../static/bootstrap/bootstrap.min.js"></script>
+
     <style>
         .center {
             text-align: center;
         }
 
+        .button {
+            background-color: #4CAF50; /* Green */
+            border: none;
+            color: white;
+            padding: 16px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            transition-duration: 0.4s;
+            cursor: pointer;
+        }
 
+        .button1 {
+            background-color: white;
+            color: black;
+            alignment: right;
+            border: 2px solid #4CAF50;
+        }
+
+        .button1:hover {
+            background-color: #4CAF50;
+            color: white;
+        }
     </style>
+    <script>
+        function verifyConnection() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "will be set after connection server implementation",
+                "method": "GET"
+            }
+
+            $.ajax(settings).done(function (response) {
+                if (response.length > 0) {
+                    window.location.href = '/connected/' + response;
+                }
+            });
+        }
+    </script>
 
 </head>
 
@@ -33,12 +75,22 @@
     </p>
     <br>
 </div>
-<img src="./static/qrcode.png" align="right" width="200" height="200">
-<div class="progress" style="width: 200px; height:80px;">
+<div class="progress" style="width: 200px; height:80px; ">
     <div class="progress-bar progress-bar-{{ progress_color }} progress-bar-striped" role="progressbar"
          aria-valuenow={{ progress_value }} aria-valuemin="0" aria-valuemax="100" style={{ progress_style }}>
         {{ progress_label }}
     </div>
 </div>
+<img align="right" src="./static/qrcode.png" width="200" height="200">
+
+
+<div align="right">
+    <h5 style="color: #3c763d">QR Kodu okuttuktan sonra "Giris" tusuna basiniz.</h5>
+    <button class="button1" onclick="verifyConnection()">Giris</button>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</div>
+
+
 </body>
 </html>
