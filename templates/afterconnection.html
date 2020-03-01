@@ -28,7 +28,7 @@
     </script>
     <style>
 
-         floating {
+        floating {
             position: relative;
             top: 0px;
             -webkit-animation: bounce 0.3s ease infinite alternate;
@@ -76,32 +76,17 @@
         }
 
     </style>
-
-<style>
-body {
-  background-image: url('../static/back.jpg');
-  background-repeat: no-repeat;
-    background-attachment: fixed;
-  background-size: cover;
-}
-</style>
 </head>
 
 <body>
-<br>
-<br>
-<br>
-<br>
-<br>
-
-<h1 style="color: green;text-align: center;"> Hoşgeldiniz, {{ user_name }} {{ user_surname }}</h1>
+<h3 style="color: green;text-align: center;"> Hoşgeldiniz,</h3>
+<h3 class="center"> {{ user_name }} {{ user_surname }}</h3>
 <p style="text-align: center; font-size: 14px;">Güncel Bakiyeniz: {{ user_balance }}</p>
 <br>
 <div class="center">
-    <floating> Lütfen şişenizin barkodunu okutunuz</floating>
+    <h4> Lütfen şişenizin barkodunu okutunuz</h4>
     <img src="../static/tenor.gif" width="80px" height="40px" align="center">
 </div>
-<br>
 <div align="center">
     <h5 style="color: red"> Okuttuktan sonra Tamam butonuna basiniz</h5>
     <button class="button1" onclick="verifyConnection()">Tamam</button>
