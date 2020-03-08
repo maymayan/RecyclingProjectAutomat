@@ -62,21 +62,9 @@ def connection_page(usermail):
 def barcodeScanned(barcode):
     scannedBottleBarcode = barcode
     # request to bottle repo to have bottle's info
-    # r = requests.get('http://localhost:5000/opencover/'+barcode)
-    openfirst()
+    r = requests.get('http://localhost:5000/opencover')
     sleep(1)
     return render_template('afterbarcodescanned.html')
-
-
-def openfirst():
-    sleep(1)
-    servoPIN = 6
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)
-    p.start(2.5)
-    p.ChangeDutyCycle(12.5)
-    sleep(1)
 
 
 @app.route('/opencover')
@@ -153,13 +141,11 @@ def verifyBottle():
     camera.capture('./static/temp.png')
     camera.stop_preview()
     verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
+    camera.close()
     if (verified):
-        acceptBottlePage()
+        return acceptBottlePage()
     else:
         return "Kabul edilmedi"
-    camera.close()
-
-    return acceptBottlePage()
 
 
 if __name__ == '__main__':
