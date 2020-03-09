@@ -24,6 +24,7 @@ img = qr.make_image(fill_color="black", back_color="white")
 img.save("./static/qrcode.png")
 
 scannedBottleBarcode = ""
+connectedUser = ""
 
 
 @app.route('/')
@@ -40,7 +41,7 @@ def welcome_page():
         color = "warning"
     if (value == 100):
         color = "danger"
-    return render_template('homepage.html', progress_value=str(int(value)),
+    return render_template('homepage.html', automat_id="automat1", progress_value=str(int(value)),
                            progress_style="width:" + str(int(value)) + "%",
                            progress_label="%" + str(int(value)) + " dolu",
                            progress_color=color,
@@ -55,19 +56,20 @@ def connection_page(usermail):
     name = user.json()['name']
     surname = user.json()['surname']
     balance = user.json()['balance']
-    return render_template('afterconnection.html', user_name=name, user_surname=surname, user_balance=balance)
+    connectedUser = usermail
+    return render_template('afterconnection.html', connected_user=connectedUser, automat_id="automat1", user_name=name,
+                           user_surname=surname, user_balance=balance)
 
 
 @app.route('/scannedBarcode/<barcode>')
 def barcodeScanned(barcode):
     scannedBottleBarcode = barcode
     # request to bottle repo to have bottle's info
-    r = requests.get('http://localhost:5000/opencover')
+    openTheCover()
     sleep(1)
     return render_template('afterbarcodescanned.html')
 
 
-@app.route('/opencover')
 def openTheCover():
     sleep(1)
     servoPIN = 6
@@ -79,7 +81,6 @@ def openTheCover():
     sleep(1)
     GPIO.cleanup()
     sleep(1)
-    return ""
 
 
 @app.route('/closecover')
@@ -95,6 +96,21 @@ def closeTheCover():
     GPIO.cleanup()
     sleep(1)
     return verifyBottle()
+
+
+@app.route('/verifyBottle')
+def verifyBottle():
+    camera = PiCamera()
+    camera.start_preview()
+    sleep(2)
+    camera.capture('./static/temp.png')
+    camera.stop_preview()
+    verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
+    camera.close()
+    if (verified):
+        return acceptBottlePage()
+    else:
+        return "Kabul edilmedi"
 
 
 def acceptBottlePage():
@@ -130,22 +146,15 @@ def acceptBottlePage():
                            json={"id": "automat1", "capacity": capacity, "isActive": "true",
                                  "numberOfBottles": numOfBottles,
                                  "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    return welcome_page()
+    user = requests.get("http://localhost:8080/rest/users/" + connectedUser)
+    points="1"
+    update = requests.put("http://localhost:8080/rest/users/addPoints/"+connectedUser+"/"+points)
+    return success()
 
 
-@app.route('/verifyBottle')
-def verifyBottle():
-    camera = PiCamera()
-    camera.start_preview()
-    sleep(2)
-    camera.capture('./static/temp.png')
-    camera.stop_preview()
-    verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
-    camera.close()
-    if (verified):
-        return acceptBottlePage()
-    else:
-        return "Kabul edilmedi"
+def success():
+    return render_template('successpage.html', bottle_type=scannedBottleBarcode, point=scannedBottleBarcode,
+                           connected_user=connectedUser)
 
 
 if __name__ == '__main__':
