@@ -25,7 +25,8 @@ img.save("./static/qrcode.png")
 
 scannedBottleBarcode = ""
 connectedUser = ""
-
+scannedBottlePoint = 0.0
+scannedBottleName = ""
 
 @app.route('/')
 def welcome_page():
@@ -56,6 +57,7 @@ def connection_page(usermail):
     name = user.json()['name']
     surname = user.json()['surname']
     balance = user.json()['balance']
+    global connectedUser
     connectedUser = usermail
     return render_template('afterconnection.html', connected_user=connectedUser, automat_id="automat1", user_name=name,
                            user_surname=surname, user_balance=balance)
@@ -63,7 +65,13 @@ def connection_page(usermail):
 
 @app.route('/scannedBarcode/<barcode>')
 def barcodeScanned(barcode):
+    bottle = requests.get("http://localhost:8080/rest/bottles/"+barcode)
+    global scannedBottleBarcode
     scannedBottleBarcode = barcode
+    global scannedBottlePoint
+    scannedBottlePoint = bottle.json()["price"]
+    global scannedBottleName
+    scannedBottleName = bottle.json()["name"]+" "+bottle.json()["type"]
     # request to bottle repo to have bottle's info
     openTheCover()
     sleep(1)
@@ -114,48 +122,75 @@ def verifyBottle():
 
 
 def acceptBottlePage():
-    r = requests.get("http://localhost:8080/rest/automats/automat1")
-    numOfBottles = r.json()['numberOfBottles']
-    capacity = r.json()['capacity']
+    automat = requests.get("http://localhost:8080/rest/automats/automat1")
+    numberOfBottles = automat.json()['numberOfBottles']
+    capacity = automat.json()['capacity']
     if (capacity == 0):
         return "DOLDU"
-    numOfBottles = numOfBottles + 1
+    numberOfBottles = numberOfBottles + 1
 
-    if (numOfBottles == 3):
-        r1 = requests.post("http://localhost:8080/rest/automats/addAutomat",
+    if numberOfBottles == 3:
+        requests.post("http://localhost:8080/rest/automats/addAutomat",
                            json={"id": "automat1", "capacity": 75, "isActive": "true",
-                                 "numberOfBottles": numOfBottles,
+                                 "numberOfBottles": numberOfBottles,
                                  "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif (numOfBottles == 6):
-        r1 = requests.post("http://localhost:8080/rest/automats/addAutomat",
+    elif numberOfBottles == 6:
+        requests.post("http://localhost:8080/rest/automats/addAutomat",
                            json={"id": "automat1", "capacity": 50, "isActive": "true",
-                                 "numberOfBottles": numOfBottles,
+                                 "numberOfBottles": numberOfBottles,
                                  "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif (numOfBottles == 9):
-        r1 = requests.post("http://localhost:8080/rest/automats/addAutomat",
+    elif numberOfBottles == 9:
+        requests.post("http://localhost:8080/rest/automats/addAutomat",
                            json={"id": "automat1", "capacity": 25, "isActive": "true",
-                                 "numberOfBottles": numOfBottles,
+                                 "numberOfBottles": numberOfBottles,
                                  "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif (numOfBottles == 12):
-        r1 = requests.post("http://localhost:8080/rest/automats/addAutomat",
+    elif numberOfBottles == 12:
+        requests.post("http://localhost:8080/rest/automats/addAutomat",
                            json={"id": "automat1", "capacity": 0, "isActive": "true",
-                                 "numberOfBottles": numOfBottles,
+                                 "numberOfBottles": numberOfBottles,
                                  "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
     else:
-        r1 = requests.post("http://localhost:8080/rest/automats/addAutomat",
+        requests.post("http://localhost:8080/rest/automats/addAutomat",
                            json={"id": "automat1", "capacity": capacity, "isActive": "true",
-                                 "numberOfBottles": numOfBottles,
+                                 "numberOfBottles": numberOfBottles,
                                  "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    user = requests.get("http://localhost:8080/rest/users/" + connectedUser)
-    points="1"
-    update = requests.put("http://localhost:8080/rest/users/addPoints/"+connectedUser+"/"+points)
     return success()
 
 
 def success():
-    return render_template('successpage.html', bottle_type=scannedBottleBarcode, point=scannedBottleBarcode,
+    openBottomLid()
+    sleep(1)
+    closeBottomLid()
+    global scannedBottlePoint
+    global connectedUser
+    link = "http://localhost:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint)
+    requests.put(link)
+    global scannedBottleBarcode
+    return render_template('successpage.html', bottle_type=scannedBottleName, point=scannedBottlePoint,
                            connected_user=connectedUser)
 
+
+def openBottomLid():
+    sleep(1)
+    servoPIN = 5
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(2.5)
+    p.ChangeDutyCycle(7.5)
+    sleep(1)
+    GPIO.cleanup()
+
+def closeBottomLid():
+    sleep(1)
+    servoPIN = 5
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(7.5)
+    p.ChangeDutyCycle(2.5)
+    sleep(1)
+    GPIO.cleanup()
 
 if __name__ == '__main__':
     app.run()
