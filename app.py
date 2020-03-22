@@ -28,20 +28,24 @@ connectedUser = ""
 scannedBottlePoint = 0.0
 scannedBottleName = ""
 
+
 @app.route('/')
 def welcome_page():
     r = requests.get("http://localhost:8080/rest/automats/automat1")
     address = r.json()['location']
-    value = 100 - r.json()['capacity']
+    value = 100 - int(r.json()['capacity'])
     color = ""
-    if (value == 25):
+    if (value <= 25 and value >= 0):
         color = "success"
-    if (value == 50):
+    elif (value <= 50 and value > 25):
         color = "info"
-    if (value == 75):
+    elif (value <= 75 and value > 50):
         color = "warning"
-    if (value == 100):
+    elif (value < 100 and value > 75):
         color = "danger"
+    elif (value == 100):
+        return render_template('outofcapacity.html')
+
     return render_template('homepage.html', automat_id="automat1", progress_value=str(int(value)),
                            progress_style="width:" + str(int(value)) + "%",
                            progress_label="%" + str(int(value)) + " dolu",
@@ -71,38 +75,47 @@ def barcodeScanned(barcode):
     global scannedBottlePoint
     scannedBottlePoint = bottle.json()["price"]
     global scannedBottleName
-    scannedBottleName = bottle.json()["name"]+" "+bottle.json()["type"]
-    # request to bottle repo to have bottle's info
-    openTheCover()
-    sleep(1)
+    scannedBottleName = bottle.json()["name"] + " " + bottle.json()["type"]
+    openFirst()
     return render_template('afterbarcodescanned.html')
 
 
-def openTheCover():
-    sleep(1)
+def openFirst():
     servoPIN = 6
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servoPIN, GPIO.OUT)
     p = GPIO.PWM(servoPIN, 50)
     p.start(2.5)
     p.ChangeDutyCycle(12.5)
-    sleep(1)
+    sleep(0.5)
     GPIO.cleanup()
-    sleep(1)
+    sleep(0.5)
+
+
+@app.route('/opencover')
+def openTheCover():
+    servoPIN = 6
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(2.5)
+    p.ChangeDutyCycle(12.5)
+    sleep(0.5)
+    GPIO.cleanup()
+    sleep(0.5)
 
 
 @app.route('/closecover')
 def closeTheCover():
-    sleep(1)
     servoPIN = 6
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servoPIN, GPIO.OUT)
     p = GPIO.PWM(servoPIN, 50)
     p.start(12.5)
     p.ChangeDutyCycle(2.5)
-    sleep(1)
+    sleep(0.5)
     GPIO.cleanup()
-    sleep(1)
+    sleep(0.5)
     return verifyBottle()
 
 
