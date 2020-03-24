@@ -31,7 +31,11 @@ scannedBottleName = ""
 
 @app.route('/')
 def welcome_page():
-    r = requests.get("http://localhost:8080/rest/automats/automat1")
+    r = None
+    try:
+        r = requests.get("http://localhost:8080/rest/automats/automat1")
+    except requests.exceptions.RequestException:
+        return render_template('cannotconnectautomat.html')
     address = r.json()['location']
     value = 100 - int(r.json()['capacity'])
     color = ""
@@ -135,39 +139,16 @@ def verifyBottle():
 
 
 def acceptBottlePage():
-    automat = requests.get("http://localhost:8080/rest/automats/automat1")
-    numberOfBottles = automat.json()['numberOfBottles']
-    capacity = automat.json()['capacity']
-    if (capacity == 0):
-        return "DOLDU"
-    numberOfBottles = numberOfBottles + 1
+    global scannedBottleBarcode
+    requestCounter = 0
+    while (requestCounter < 5):
+        try:
+            r = requests.put("http://localhost:8080/rest/automats/changeCapacity/automat1/"+scannedBottleBarcode)
+            if (r.json()==True):
+                return success()
+        except requests.exceptions.RequestException:
+            requestCounter += 1
 
-    if numberOfBottles == 3:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 75, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif numberOfBottles == 6:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 50, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif numberOfBottles == 9:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 25, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif numberOfBottles == 12:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 0, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    else:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": capacity, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    return success()
 
 
 def success():
