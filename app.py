@@ -160,11 +160,11 @@ def success():
     closeBottomLid()
     global scannedBottlePoint
     global connectedUser
+    global scannedBottleBarcode
     link = "http://localhost:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint)
     requests.put(link)
-    global scannedBottleBarcode
     return render_template('successpage.html', bottle_type=scannedBottleName, point=scannedBottlePoint,
-                           connected_user=connectedUser)
+                           connected_user=connectedUser, barcode=scannedBottleBarcode, automat_id="automat1")
 
 
 def openBottomLid():

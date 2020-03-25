@@ -9,40 +9,75 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
     <script src="../static/bootstrap/animation.js"></script>
     <script>
+        counter = 0;
+
         function closeConnection() {
             var settings = {
                 "async": true,
                 "crossDomain": true,
-                "url": "http://localhost:8080/connection/closeConnection/{{ connected_user }}",
+                "url": "http://localhost:8080/connections/closeOrNewTransaction/{{ connected_user }}/{{ automat_id }}/{{ barcode }}/1/0",
                 "method": "POST"
             }
 
             $.ajax(settings).done(function (response) {
-                if (response.toString() === "Closed") {
+                if (response.toString() === "true") {
+                    window.location.href = '/';
+                } else {
+                    console.log(response.toString());
+                    counter++;
+                    if (counter < 5) {
+                        setTimeout(closeConnection, 1000);
+                    } else {
+                        alert("Bağlantınız Bulunmamaktadir!");
+                        window.location.href = '/';
+                    }
+                }
+            }).fail(function () {
+                if (counter < 5) {
+                    counter++;
+                    closeConnection()
+                } else {
                     window.location.href = '/';
                 }
+
             });
         }
 
+        function newTransaction() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://localhost:8080/connections/closeOrNewTransaction/{{ connected_user }}/{{ automat_id }}/{{ barcode }}/1/1",
+                "method": "POST"
+            }
 
+            $.ajax(settings).done(function (response) {
+                if (response.toString() === "false") {
+                    window.location.href = "/connected/maymayan@etu.edu.tr";
+                } else {
+                    console.log(response.toString());
+                    counter++;
+                    if (counter < 5) {
+                        setTimeout(closeConnection, 1000);
+                    } else {
+                        alert("Bağlantınız Bulunmamaktadir!");
+                        window.location.href = '/';
+                    }
+                }
+            }).fail(function () {
+                if (counter < 5) {
+                    counter++;
+                    closeConnection()
+                } else {
+                    window.location.href = '/';
+                }
+
+            });
+        }
     </script>
     <style>
         .center {
             align-items: center;
-        }
-
-        .button {
-            background-color: #4CAF50; /* Green */
-            border: none;
-            color: white;
-            padding: 16px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            transition-duration: 0.4s;
-            cursor: pointer;
         }
 
         .button1 {
@@ -81,9 +116,7 @@
 
 <div style="display: inline-block;">
     <p> Yeni bir şişe okutmak için tıklayınız...</p>
-    <form action="../connected/{{ connected_user }}">
-        <button class="button1">Yeni İşlem</button>
-    </form>
+    <button class="button1" onclick="newTransaction()">Yeni İşlem</button>
 </div>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 

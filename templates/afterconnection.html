@@ -29,6 +29,7 @@
                         setTimeout(verifyScan, 1000);
                     } else {
                         alert("Belirtilen sürede işlem yapmadığınız için bağlantınız sonlandırılıyor.");
+                        window.location.href = '/';
                     }
                 }
             }).fail(function () {
