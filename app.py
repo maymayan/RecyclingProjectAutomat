@@ -9,8 +9,9 @@ from picamera import PiCamera
 app = Flask(__name__)
 
 r = requests.post("http://localhost:8080/rest/automats/addAutomat",
-                  json={"id": "automat1", "capacity": 100, "isActive": "true", "numberOfBottles": 0,
-                        "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
+                  json={"id": "automat1", "capacity": 100, "active": "true", "numberOfBottles": 0,
+                        "location": {"province": "Ankara", "district": "Cankaya", "neighborhood": "Sogutozu",
+                                     "latitude": 39.98, "longitude": 32.75}, "baseConnection": None})
 qr = qrcode.QRCode(
     version=1,
     error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -54,9 +55,8 @@ def welcome_page():
                            progress_style="width:" + str(int(value)) + "%",
                            progress_label="%" + str(int(value)) + " dolu",
                            progress_color=color,
-                           address_neighborhood=address['neighborhood'], address_street=address['street'],
-                           address_no=address[
-                               'no'])
+                           address_province=address['province'], address_district=address['district'],
+                           address_neighborhood=address['neighborhood'])
 
 
 @app.route('/connected/<usermail>')
@@ -164,14 +164,21 @@ def acceptBottlePage():
             change_capacity = requests.put(
                 "http://localhost:8080/rest/automats/changeCapacity/automat1/" + scannedBottleBarcode)
             send_verified = requests.post(
-                "localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
+                "http://localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
             if change_capacity.json() and update_balance and send_verified:
                 return success()
         except requests.exceptions.RequestException:
-            request_counter += 1
+            if(request_counter<5):
+                request_counter += 1
+            else:
+                return fail()
 
 
 def success():
+    global scannedBottleBarcode
+    global connectedUser
+    global scannedBottlePoint
+    global scannedBottleName
     openBottomLid()
     sleep(1)
     closeBottomLid()
@@ -181,6 +188,7 @@ def success():
 
 def declineBottlePage():
     global scannedBottleBarcode
+    global connectedUser
     request_counter = 0
     while (request_counter < 5):
         try:
@@ -193,6 +201,8 @@ def declineBottlePage():
 
 
 def fail():
+    global connectedUser
+    global scannedBottleBarcode
     openFirst()
     return render_template('failpage.html', connected_user=connectedUser, barcode=scannedBottleBarcode,
                            automat_id="automat1")
