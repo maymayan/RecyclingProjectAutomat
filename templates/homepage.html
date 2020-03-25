@@ -42,19 +42,32 @@
 
     </style>
     <script>
+        counter = 0;
         function verifyConnection() {
             var settings = {
                 "async": true,
                 "crossDomain": true,
-                "url": "http://localhost:8080/connection/getConnectedUser/{{ automat_id }}",
+                "url": "http://localhost:8080/connections/getConnectedUser/{{ automat_id }}",
                 "method": "GET"
             }
 
             $.ajax(settings).done(function (response) {
                 if (response.length > 0) {
                     window.location.href = '/connected/' + response;
+                } else {
+                    alert("Profilinize erişilemedi. Lütfen QR Kodu okuttuğunuzdan ve internet bağlantınız olduğundan emin olunuz!");
                 }
-            });
+            }).fail(function () {
+                    counter++;
+                    if (counter < 5) {
+                        setTimeout(verifyConnection, 1000);
+                    } else {
+                        alert("Üzgünüm. Şu anda sunucu ile bağlantı kurmakta problem yaşanıyor. Lütfen bekleyiniz veya daha sonra tekrar deneyiniz!");
+                        window.location.href = '/';
+                    }
+
+                }
+            );
         }
 
     </script>

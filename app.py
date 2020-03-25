@@ -3,7 +3,7 @@ from time import sleep
 import RPi.GPIO as GPIO
 import qrcode
 import requests
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
 from picamera import PiCamera
 
 app = Flask(__name__)
@@ -28,20 +28,28 @@ connectedUser = ""
 scannedBottlePoint = 0.0
 scannedBottleName = ""
 
+
 @app.route('/')
 def welcome_page():
-    r = requests.get("http://localhost:8080/rest/automats/automat1")
+    r = None
+    try:
+        r = requests.get("http://localhost:8080/rest/automats/automat1")
+    except requests.exceptions.RequestException:
+        return render_template('cannotconnectautomat.html')
     address = r.json()['location']
-    value = 100 - r.json()['capacity']
+    value = 100 - int(r.json()['capacity'])
     color = ""
-    if (value == 25):
+    if (value <= 25 and value >= 0):
         color = "success"
-    if (value == 50):
+    elif (value <= 50 and value > 25):
         color = "info"
-    if (value == 75):
+    elif (value <= 75 and value > 50):
         color = "warning"
-    if (value == 100):
+    elif (value < 100 and value > 75):
         color = "danger"
+    elif (value == 100):
+        return render_template('outofcapacity.html')
+
     return render_template('homepage.html', automat_id="automat1", progress_value=str(int(value)),
                            progress_style="width:" + str(int(value)) + "%",
                            progress_label="%" + str(int(value)) + " dolu",
@@ -71,39 +79,62 @@ def barcodeScanned(barcode):
     global scannedBottlePoint
     scannedBottlePoint = bottle.json()["price"]
     global scannedBottleName
-    scannedBottleName = bottle.json()["name"]+" "+bottle.json()["type"]
-    # request to bottle repo to have bottle's info
-    openTheCover()
-    sleep(1)
+    scannedBottleName = bottle.json()["name"] + " " + bottle.json()["type"]
+    openFirst()
     return render_template('afterbarcodescanned.html')
 
 
-def openTheCover():
-    sleep(1)
+def openFirst():
     servoPIN = 6
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servoPIN, GPIO.OUT)
     p = GPIO.PWM(servoPIN, 50)
     p.start(2.5)
     p.ChangeDutyCycle(12.5)
-    sleep(1)
+    sleep(0.5)
     GPIO.cleanup()
-    sleep(1)
+    sleep(0.5)
+
+
+@app.route('/opencover')
+def openTheCover():
+    servoPIN = 6
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(2.5)
+    p.ChangeDutyCycle(12.5)
+    sleep(0.5)
+    GPIO.cleanup()
+    sleep(0.5)
 
 
 @app.route('/closecover')
 def closeTheCover():
-    sleep(1)
     servoPIN = 6
     GPIO.setmode(GPIO.BCM)
     GPIO.setup(servoPIN, GPIO.OUT)
     p = GPIO.PWM(servoPIN, 50)
     p.start(12.5)
     p.ChangeDutyCycle(2.5)
-    sleep(1)
+    sleep(0.5)
     GPIO.cleanup()
-    sleep(1)
+    sleep(0.5)
     return verifyBottle()
+
+
+@app.route('/closeCoverOnFail/<barcode>')
+def closeCoverOnFail(barcode):
+    servoPIN = 6
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(12.5)
+    p.ChangeDutyCycle(2.5)
+    sleep(0.5)
+    GPIO.cleanup()
+    sleep(0.5)
+    return redirect('/scannedBarcode/' + barcode, 302)
 
 
 @app.route('/verifyBottle')
@@ -118,56 +149,53 @@ def verifyBottle():
     if (verified):
         return acceptBottlePage()
     else:
-        return "Kabul edilmedi"
+        return declineBottlePage()
 
 
 def acceptBottlePage():
-    automat = requests.get("http://localhost:8080/rest/automats/automat1")
-    numberOfBottles = automat.json()['numberOfBottles']
-    capacity = automat.json()['capacity']
-    if (capacity == 0):
-        return "DOLDU"
-    numberOfBottles = numberOfBottles + 1
-
-    if numberOfBottles == 3:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 75, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif numberOfBottles == 6:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 50, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif numberOfBottles == 9:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 25, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    elif numberOfBottles == 12:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": 0, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    else:
-        requests.post("http://localhost:8080/rest/automats/addAutomat",
-                           json={"id": "automat1", "capacity": capacity, "isActive": "true",
-                                 "numberOfBottles": numberOfBottles,
-                                 "location": {"neighborhood": "Cankaya", "street": "Sogutozu", "no": "1"}})
-    return success()
+    global scannedBottleBarcode
+    global connectedUser
+    global scannedBottlePoint
+    request_counter = 0
+    while (request_counter < 5):
+        try:
+            update_balance = requests.put(
+                "http://localhost:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint))
+            change_capacity = requests.put(
+                "http://localhost:8080/rest/automats/changeCapacity/automat1/" + scannedBottleBarcode)
+            send_verified = requests.post(
+                "localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
+            if change_capacity.json() and update_balance and send_verified:
+                return success()
+        except requests.exceptions.RequestException:
+            request_counter += 1
 
 
 def success():
     openBottomLid()
     sleep(1)
     closeBottomLid()
-    global scannedBottlePoint
-    global connectedUser
-    link = "http://localhost:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint)
-    requests.put(link)
-    global scannedBottleBarcode
     return render_template('successpage.html', bottle_type=scannedBottleName, point=scannedBottlePoint,
-                           connected_user=connectedUser)
+                           connected_user=connectedUser, barcode=scannedBottleBarcode, automat_id="automat1")
+
+
+def declineBottlePage():
+    global scannedBottleBarcode
+    request_counter = 0
+    while (request_counter < 5):
+        try:
+            sendNotVerified = requests.post(
+                "http://localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/0")
+            if (sendNotVerified.json()):
+                return fail()
+        except requests.exceptions.RequestException:
+            request_counter += 1
+
+
+def fail():
+    openFirst()
+    return render_template('failpage.html', connected_user=connectedUser, barcode=scannedBottleBarcode,
+                           automat_id="automat1")
 
 
 def openBottomLid():
