@@ -9,19 +9,42 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
     <script src="../static/bootstrap/animation.js"></script>
     <script>
+        counter = 0;
         function verifyScan() {
+            document.getElementById("progressBar").value = 15 - counter;
+            document.getElementById("sayac").innerText = " " + 15 - counter;
             var settings = {
                 "async": true,
                 "crossDomain": true,
-                "url": "http://localhost:8080/connection/getScannedBarcode/{{ connected_user  }}/{{ automat_id }}",
+                "url": "http://localhost:8080/connections/getScannedBarcode/{{ connected_user  }}/{{ automat_id }}",
                 "method": "GET"
             }
 
             $.ajax(settings).done(function (response) {
                 if (response.length > 0) {
                     window.location.href = '/scannedBarcode/' + response;
+                } else {
+                    if (counter < 15) {
+                        counter++;
+                        setTimeout(verifyScan, 1000);
+                    } else {
+                        alert("Belirtilen sürede işlem yapmadığınız için bağlantınız sonlandırılıyor.");
+                    }
                 }
-            });
+            }).fail(function () {
+                    if (counter < 15) {
+                        counter++;
+                        verifyScan();
+                    } else {
+                        if (window.confirm("Üzgünüm. Şu anda sunucu ile bağlantı kurmakta problem yaşanıyor. Lütfen bekleyiniz veya daha sonra tekrar deneyiniz!", "Tekrar Dene", "Cikis"))
+                            window.location.href = '/connected/{{ connected_user }}';
+                        else
+                            window.location.href = "/";
+                    }
+                }
+            );
+
+
         }
 
 
@@ -78,18 +101,16 @@
     </style>
 </head>
 
-<body>
+<body onload="verifyScan()">
 <h3 style="color: green;text-align: center;"> Hoşgeldiniz,</h3>
 <h3 class="center"> {{ user_name }} {{ user_surname }}</h3>
 <p style="text-align: center; font-size: 14px;">Güncel Bakiyeniz: {{ user_balance }}</p>
 <br>
 <div class="center">
-    <h4> Lütfen şişenizin barkodunu okutunuz</h4>
+    <h4> Lütfen 15 saniye içinde şişenizin barkodunu okutunuz</h4>
+    <label id="sayac"></label>
+    <progress value="0" max="15" id="progressBar"></progress>
     <img src="../static/tenor.gif" width="80px" height="40px" align="center">
-</div>
-<div align="center">
-    <h5 style="color: red"> Okuttuktan sonra Tamam butonuna basiniz</h5>
-    <button class="button1" onclick="verifyScan()">Tamam</button>
 </div>
 </body>
 </html>

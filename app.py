@@ -132,7 +132,10 @@ def verifyBottle():
     camera.stop_preview()
     verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
     camera.close()
+    global scannedBottleBarcode
+    global connectedUser
     if (verified):
+        requests.post("localhost:8080/connections/bottleVerification/"+connectedUser+"/automat1/"+scannedBottleBarcode+"/1")
         return acceptBottlePage()
     else:
         return "Kabul edilmedi"

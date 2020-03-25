@@ -9,10 +9,8 @@
     <script src="../static/bootstrap/bootstrap.min.js"></script>
     <script>
         function f() {
-            console.log("birr");
             ctr = 0;
             a = false;
-            console.log("ikiiii");
             var settings = {
                 "async": true,
                 "crossDomain": true,
@@ -20,11 +18,9 @@
                 "method": "GET"
             }
             $.ajax(settings).done(function (response) {
-                console.log("hey");
                 window.location = '/';
 
             }).fail(function () {
-                console.log("as");
                 setTimeout(f, 1000);
             });
 
