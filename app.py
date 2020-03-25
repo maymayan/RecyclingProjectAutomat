@@ -3,7 +3,7 @@ from time import sleep
 import RPi.GPIO as GPIO
 import qrcode
 import requests
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
 from picamera import PiCamera
 
 app = Flask(__name__)
@@ -123,6 +123,20 @@ def closeTheCover():
     return verifyBottle()
 
 
+@app.route('/closeCoverOnFail/<barcode>')
+def closeCoverOnFail(barcode):
+    servoPIN = 6
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(servoPIN, GPIO.OUT)
+    p = GPIO.PWM(servoPIN, 50)
+    p.start(12.5)
+    p.ChangeDutyCycle(2.5)
+    sleep(0.5)
+    GPIO.cleanup()
+    sleep(0.5)
+    return redirect('/scannedBarcode/' + barcode, 302)
+
+
 @app.route('/verifyBottle')
 def verifyBottle():
     camera = PiCamera()
@@ -132,39 +146,56 @@ def verifyBottle():
     camera.stop_preview()
     verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
     camera.close()
-    global scannedBottleBarcode
-    global connectedUser
     if (verified):
-        requests.post("localhost:8080/connections/bottleVerification/"+connectedUser+"/automat1/"+scannedBottleBarcode+"/1")
         return acceptBottlePage()
     else:
-        return "Kabul edilmedi"
+        return declineBottlePage()
 
 
 def acceptBottlePage():
     global scannedBottleBarcode
-    requestCounter = 0
-    while (requestCounter < 5):
+    global connectedUser
+    global scannedBottlePoint
+    request_counter = 0
+    while (request_counter < 5):
         try:
-            r = requests.put("http://localhost:8080/rest/automats/changeCapacity/automat1/"+scannedBottleBarcode)
-            if (r.json()==True):
+            update_balance = requests.put(
+                "http://localhost:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint))
+            change_capacity = requests.put(
+                "http://localhost:8080/rest/automats/changeCapacity/automat1/" + scannedBottleBarcode)
+            send_verified = requests.post(
+                "localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
+            if change_capacity.json() and update_balance and send_verified:
                 return success()
         except requests.exceptions.RequestException:
-            requestCounter += 1
-
+            request_counter += 1
 
 
 def success():
     openBottomLid()
     sleep(1)
     closeBottomLid()
-    global scannedBottlePoint
-    global connectedUser
-    global scannedBottleBarcode
-    link = "http://localhost:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint)
-    requests.put(link)
     return render_template('successpage.html', bottle_type=scannedBottleName, point=scannedBottlePoint,
                            connected_user=connectedUser, barcode=scannedBottleBarcode, automat_id="automat1")
+
+
+def declineBottlePage():
+    global scannedBottleBarcode
+    request_counter = 0
+    while (request_counter < 5):
+        try:
+            sendNotVerified = requests.post(
+                "http://localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/0")
+            if (sendNotVerified.json()):
+                return fail()
+        except requests.exceptions.RequestException:
+            request_counter += 1
+
+
+def fail():
+    openFirst()
+    return render_template('failpage.html', connected_user=connectedUser, barcode=scannedBottleBarcode,
+                           automat_id="automat1")
 
 
 def openBottomLid():
