@@ -1,40 +1,39 @@
 from time import sleep
 
 import RPi.GPIO as GPIO
-import qrcode
+import pyqrcode
 import requests
 from flask import Flask, render_template, redirect
 from picamera import PiCamera
+import cv2
 
 app = Flask(__name__)
 
-r = requests.post("http://localhost:8080/rest/automats/addAutomat",
-                  json={"id": "automat1", "capacity": 100, "active": "true", "numberOfBottles": 0,
+r = requests.post("http://192.168.1.6:8080/rest/automats/addAutomat",
+                  json={"id": "automat1","overallVolume":10.0, "capacity": 100, "active": "true", "numberOfBottles": 0,
                         "location": {"province": "Ankara", "district": "Cankaya", "neighborhood": "Sogutozu",
                                      "latitude": 39.98, "longitude": 32.75}, "baseConnection": None})
-qr = qrcode.QRCode(
-    version=1,
-    error_correction=qrcode.constants.ERROR_CORRECT_L,
-    box_size=10,
-    border=4,
-)
-qr.add_data('')
-qr.make(fit=True)
-GPIO.cleanup()
-img = qr.make_image(fill_color="black", back_color="white")
-img.save("./static/qrcode.png")
+
+qr= pyqrcode.create("automat1")
+qr.svg("./static/qrcode.svg", scale = 8)
 
 scannedBottleBarcode = ""
 connectedUser = ""
 scannedBottlePoint = 0.0
 scannedBottleName = ""
 
+coverPIN = 6
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(coverPIN, GPIO.OUT)
+cover = GPIO.PWM(coverPIN, 50)
+
+
 
 @app.route('/')
 def welcome_page():
     r = None
     try:
-        r = requests.get("http://localhost:8080/rest/automats/automat1")
+        r = requests.get("http://192.168.1.6:8080/rest/automats/automat1")
     except requests.exceptions.RequestException:
         return render_template('cannotconnectautomat.html')
     address = r.json()['location']
@@ -61,7 +60,7 @@ def welcome_page():
 
 @app.route('/connected/<usermail>')
 def connection_page(usermail):
-    user = requests.get("http://localhost:8080/rest/users/" + usermail)
+    user = requests.get("http://192.168.1.6:8080/rest/users/" + usermail)
     name = user.json()['name']
     surname = user.json()['surname']
     balance = user.json()['balance']
@@ -73,7 +72,7 @@ def connection_page(usermail):
 
 @app.route('/scannedBarcode/<barcode>')
 def barcodeScanned(barcode):
-    bottle = requests.get("http://localhost:8080/rest/bottles/"+barcode)
+    bottle = requests.get("http://192.168.1.6:8080/rest/bottles/"+barcode)
     global scannedBottleBarcode
     scannedBottleBarcode = barcode
     global scannedBottlePoint
@@ -85,55 +84,40 @@ def barcodeScanned(barcode):
 
 
 def openFirst():
-    servoPIN = 6
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)
-    p.start(2.5)
-    p.ChangeDutyCycle(12.5)
-    sleep(0.5)
-    GPIO.cleanup()
-    sleep(0.5)
+    sleep(1)
+    global cover
+    cover.start(2.5)
+    cover.ChangeDutyCycle(12.5)
+    sleep(2)
 
 
 @app.route('/opencover')
 def openTheCover():
-    servoPIN = 6
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)
-    p.start(2.5)
-    p.ChangeDutyCycle(12.5)
-    sleep(0.5)
-    GPIO.cleanup()
-    sleep(0.5)
+    sleep(1)
+    global cover
+    cover.start(2.5)
+    cover.ChangeDutyCycle(9)
+    sleep(2)
+    return redirect('/scannedBarcode/'+scannedBottleBarcode)
 
 
 @app.route('/closecover')
 def closeTheCover():
-    servoPIN = 6
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)
-    p.start(12.5)
-    p.ChangeDutyCycle(2.5)
-    sleep(0.5)
-    GPIO.cleanup()
-    sleep(0.5)
+    sleep(1)
+    global cover
+    cover.start(9)
+    cover.ChangeDutyCycle(2.5)
+    sleep(2)
     return verifyBottle()
 
 
 @app.route('/closeCoverOnFail/<barcode>')
 def closeCoverOnFail(barcode):
-    servoPIN = 6
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)
-    p.start(12.5)
-    p.ChangeDutyCycle(2.5)
-    sleep(0.5)
-    GPIO.cleanup()
-    sleep(0.5)
+    sleep(1)
+    global cover
+    cover.start(9)
+    cover.ChangeDutyCycle(2.5)
+    sleep(2)
     return redirect('/scannedBarcode/' + barcode, 302)
 
 
@@ -142,7 +126,7 @@ def verifyBottle():
     camera = PiCamera()
     camera.start_preview()
     sleep(2)
-    camera.capture('./static/temp.png')
+    camera.capture('./static/temp.jpg')
     camera.stop_preview()
     verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
     camera.close()
@@ -160,11 +144,11 @@ def acceptBottlePage():
     while (request_counter < 5):
         try:
             update_balance = requests.put(
-                "http://localhost:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint))
+                "http://192.168.1.6:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint))
             change_capacity = requests.put(
-                "http://localhost:8080/rest/automats/changeCapacity/automat1/" + scannedBottleBarcode)
+                "http://192.168.1.6:8080/rest/automats/changeCapacity/automat1/" + scannedBottleBarcode)
             send_verified = requests.post(
-                "http://localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
+                "http://192.168.1.6:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
             if change_capacity.json() and update_balance and send_verified:
                 return success()
         except requests.exceptions.RequestException:
@@ -193,7 +177,7 @@ def declineBottlePage():
     while (request_counter < 5):
         try:
             sendNotVerified = requests.post(
-                "http://localhost:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/0")
+                "http://192.168.1.6:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/0")
             if (sendNotVerified.json()):
                 return fail()
         except requests.exceptions.RequestException:
@@ -210,25 +194,23 @@ def fail():
 
 def openBottomLid():
     sleep(1)
-    servoPIN = 5
+    lidPIN = 5
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)
-    p.start(2.5)
-    p.ChangeDutyCycle(7.5)
+    GPIO.setup(lidPIN, GPIO.OUT)
+    lid = GPIO.PWM(lidPIN, 50)
+    lid.start(2.5)
+    lid.ChangeDutyCycle(9)
     sleep(1)
-    GPIO.cleanup()
 
 def closeBottomLid():
     sleep(1)
-    servoPIN = 5
+    lidPIN = 5
     GPIO.setmode(GPIO.BCM)
-    GPIO.setup(servoPIN, GPIO.OUT)
-    p = GPIO.PWM(servoPIN, 50)
-    p.start(7.5)
-    p.ChangeDutyCycle(2.5)
+    GPIO.setup(lidPIN, GPIO.OUT)
+    lid = GPIO.PWM(lidPIN, 50)
+    lid.start(9)
+    lid.ChangeDutyCycle(2.5)
     sleep(1)
-    GPIO.cleanup()
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host = '192.168.1.2')
