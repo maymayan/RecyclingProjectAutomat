@@ -10,6 +10,103 @@
     <script src="../static/bootstrap/animation.js"></script>
     <script>
         counter = 0;
+        ctr = 0;
+
+        function waitForResultandClose() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://192.168.1.8:8080/connections/waitingForResult/automat1",
+                "method": "GET"
+            }
+
+            $.ajax(settings).done(function (response) {
+                if (response.toString() === "true") {
+                    window.location.href = "/";
+                } else {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandClose,1000);
+                    }
+                    else{
+                        alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
+
+                    }
+                }
+            }).fail(function () {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandClose,1000);
+                    }
+                    else{
+                        window.location.href = "/";
+                    }
+            });
+        }
+
+        function waitForResultandNewTr() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://192.168.1.8:8080/connections/waitingForResult/automat1",
+                "method": "GET"
+            }
+
+            $.ajax(settings).done(function (response) {
+                if (response.toString() === "true") {
+                    window.location.href = "/connected/maymayan@etu.edu.tr";
+                } else {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandNewTr,1000);
+                    }
+                    else{
+                        alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
+
+                    }
+                }
+            }).fail(function () {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandNewTr,1000);
+                    }
+                    else{
+                        window.location.href = "/";
+                    }
+            });
+        }
+
+        function waitForResultandRetryBottle() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://192.168.1.8:8080/connections/waitingForResult/automat1",
+                "method": "GET"
+            }
+
+            $.ajax(settings).done(function (response) {
+                if (response.toString() === "true") {
+                     window.location.href = "/closeCoverOnFail/{{ barcode }}";
+                } else {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandNewTr,1000);
+                    }
+                    else{
+                        alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
+
+                    }
+                }
+            }).fail(function () {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandNewTr,1000);
+                    }
+                    else{
+                        window.location.href = "/";
+                    }
+            });
+        }
 
         function closeConnection() {
             var settings = {
@@ -21,9 +118,8 @@
 
             $.ajax(settings).done(function (response) {
                 if (response.toString() === "true") {
-                    window.location.href = '/';
+                    waitForResultandClose();
                 } else {
-                    console.log(response.toString());
                     counter++;
                     if (counter < 5) {
                         setTimeout(closeConnection, 1000);
@@ -35,11 +131,10 @@
             }).fail(function () {
                 if (counter < 5) {
                     counter++;
-                    closeConnection()
+                    setTimeout(closeConnection, 1000);
                 } else {
                     window.location.href = '/';
                 }
-
             });
         }
 
@@ -52,13 +147,14 @@
             }
 
             $.ajax(settings).done(function (response) {
-                if (response.toString() === "false") {
-                    window.location.href = "/connected/{{ connected_user }}";
+                if (response.toString() === "true") {
+                    waitForResultandNewTr();
+
                 } else {
-                    console.log(response.toString());
-                    counter++;
                     if (counter < 5) {
-                        setTimeout(closeConnection, 1000);
+                        counter++;
+                        setTimeout(newTransaction, 1000);
+
                     } else {
                         alert("Bağlantınız Bulunmamaktadir!");
                         window.location.href = '/';
@@ -67,7 +163,7 @@
             }).fail(function () {
                 if (counter < 5) {
                     counter++;
-                    closeConnection()
+                    setTimeout(newTransaction, 1000);
                 } else {
                     window.location.href = '/';
                 }
@@ -84,13 +180,13 @@
             }
 
             $.ajax(settings).done(function (response) {
-                if (response.toString() === "false") {
-                    window.location.href = "/closeCoverOnFail/{{ barcode }}";
+                if (response.toString() === "true") {
+                    waitForResultandRetryBottle();
                 } else {
-                    console.log(response.toString());
-                    counter++;
                     if (counter < 5) {
-                        setTimeout(closeConnection, 1000);
+                        counter++;
+                        setTimeout(retryWithSameBarcode, 1000);
+
                     } else {
                         alert("Bağlantınız Bulunmamaktadir!");
                         window.location.href = '/';
@@ -99,7 +195,7 @@
             }).fail(function () {
                 if (counter < 5) {
                     counter++;
-                    closeConnection()
+                    setTimeout(retryWithSameBarcode, 1000);
                 } else {
                     window.location.href = '/';
                 }

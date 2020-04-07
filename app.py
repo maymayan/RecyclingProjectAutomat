@@ -21,6 +21,7 @@ scannedBottleBarcode = ""
 connectedUser = ""
 scannedBottlePoint = 0.0
 scannedBottleName = ""
+scannedBottleType = ""
 
 coverPIN = 6
 GPIO.setmode(GPIO.BCM)
@@ -36,6 +37,7 @@ def welcome_page():
         r = requests.get("http://192.168.1.6:8080/rest/automats/automat1")
     except requests.exceptions.RequestException:
         return render_template('cannotconnectautomat.html')
+    requests.post("http://192.168.1.8:8080/connections/directlyCloseConnection/automat1")
     address = r.json()['location']
     value = 100 - int(r.json()['capacity'])
     color = ""
@@ -79,6 +81,8 @@ def barcodeScanned(barcode):
     scannedBottlePoint = bottle.json()["price"]
     global scannedBottleName
     scannedBottleName = bottle.json()["name"] + " " + bottle.json()["type"]
+    global scannedBottleType
+    scannedBottleType = bottle.json()["type"]
     openFirst()
     return render_template('afterbarcodescanned.html')
 
@@ -128,7 +132,14 @@ def verifyBottle():
     sleep(2)
     camera.capture('./static/temp.jpg')
     camera.stop_preview()
-    verified = True  # model.verify('../static/temp.jpg') here will be adapted after model is created
+    global scannedBottleType
+    addr = 'http://192.168.1.6:5000'+scannedBottleType
+    content_type = 'image/jpeg'
+    headers = {'content-type': content_type}
+    img = cv2.imread('temp.jpg')
+    _, img_encoded = cv2.imencode('.jpg', img)
+    response = requests.post(addr, data=img_encoded.tostring(), headers=headers)
+    verified = response.json()
     camera.close()
     if (verified):
         return acceptBottlePage()
