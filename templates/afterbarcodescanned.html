@@ -17,18 +17,17 @@
             var recognition = new SpeechRecognition();
             var speechRecognitionList = new SpeechGrammarList();
             recognition.grammars = speechRecognitionList;
-            recognition.continuous = false;
+            recognition.continuous = true;
             recognition.lang = 'tr-tr';
             recognition.interimResults = false;
 
             recognition.start();
-            console.log('Ready to receive a color command.');
 
             recognition.onresult = function (event) {
                 console.log(event.results[0][0].transcript);
                 if(event.results[0][0].transcript.toString().toLowerCase()=="tamam"){
                     window.location.href = '/closecover';
-                }else if(event.results[0][0].transcript.toString().toLowerCase()=="aç" || event.results[0][0].transcript.toString().toLowerCase()=="ac"){
+                }else if(event.results[0][0].transcript.toString().toLowerCase()=="aç"){
                     window.location.href = '/opencover';
                 }else{
                     sr();
@@ -36,7 +35,7 @@
             }
 
             recognition.onspeechend = function (event) {
-                recognition.stop();
+                    recognition.stop();
             }
 
             recognition.onnomatch = function (event) {

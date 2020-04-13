@@ -9,6 +9,45 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
     <script src="../static/bootstrap/animation.js"></script>
     <script>
+
+        function sr() {
+            var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+            var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList
+            var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
+
+            var recognition = new SpeechRecognition();
+            var speechRecognitionList = new SpeechGrammarList();
+            recognition.grammars = speechRecognitionList;
+            recognition.continuous = true;
+            recognition.lang = 'tr-tr';
+            recognition.interimResults = false;
+
+            recognition.start();
+
+            recognition.onresult = function (event) {
+                console.log(event.results[0][0].transcript);
+                if(event.results[0][0].transcript.toString().toLowerCase()=="yeni işlem"){
+                    newTransaction();
+                }else if(event.results[0][0].transcript.toString().toLowerCase().includes("kapa")){
+                    closeConnection();
+                }else{
+                    sr();
+                }
+            }
+
+            recognition.onspeechend = function (event) {
+                    recognition.stop();
+            }
+
+            recognition.onnomatch = function (event) {
+                sr();
+            }
+
+            recognition.onerror = function (event) {
+                sr();
+            }
+        }
+
         counter = 0;
         ctr = 0;
 
@@ -169,7 +208,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="sr()">
 
 
 <h1 style="text-align: center"><img src="../static/greentick.png" width="50" height="50"> <br>Tebrikler </h1>
