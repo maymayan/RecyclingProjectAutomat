@@ -186,11 +186,11 @@ def fail():
 
 
 def openBottomLid():
-    pi.set_servo_pulsewidth(5, 2500)
+    pi.set_servo_pulsewidth(5, 1500)
     sleep(1)
 
 def closeBottomLid():
     pi.set_servo_pulsewidth(5, 500)
 
 if __name__ == '__main__':
-    app.run(host = '192.168.1.2')
+    app.run(host = '192.168.1.8')
