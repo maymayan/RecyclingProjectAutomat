@@ -1,6 +1,6 @@
 from time import sleep
 
-import RPi.GPIO as GPIO
+import pigpio
 import pyqrcode
 import requests
 from flask import Flask, render_template, redirect
@@ -22,13 +22,7 @@ connectedUser = ""
 scannedBottlePoint = 0.0
 scannedBottleName = ""
 scannedBottleType = ""
-
-coverPIN = 6
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(coverPIN, GPIO.OUT)
-cover = GPIO.PWM(coverPIN, 50)
-
-
+pi = pigpio.pi()
 
 @app.route('/')
 def welcome_page():
@@ -89,39 +83,27 @@ def barcodeScanned(barcode):
 
 def openFirst():
     sleep(1)
-    global cover
-    cover.start(2.5)
-    cover.ChangeDutyCycle(12.5)
-    sleep(2)
+    pi.set_servo_pulsewidth(6, 1500)
 
 
 @app.route('/opencover')
 def openTheCover():
     sleep(1)
-    global cover
-    cover.start(2.5)
-    cover.ChangeDutyCycle(9)
-    sleep(2)
+    pi.set_servo_pulsewidth(6, 1500)
     return redirect('/scannedBarcode/'+scannedBottleBarcode)
 
 
 @app.route('/closecover')
 def closeTheCover():
     sleep(1)
-    global cover
-    cover.start(9)
-    cover.ChangeDutyCycle(2.5)
-    sleep(2)
+    pi.set_servo_pulsewidth(6, 500)
     return verifyBottle()
 
 
 @app.route('/closeCoverOnFail/<barcode>')
 def closeCoverOnFail(barcode):
     sleep(1)
-    global cover
-    cover.start(9)
-    cover.ChangeDutyCycle(2.5)
-    sleep(2)
+    pi.set_servo_pulsewidth(6, 500)
     return redirect('/scannedBarcode/' + barcode, 302)
 
 
@@ -136,10 +118,10 @@ def verifyBottle():
     addr = 'http://192.168.1.6:5000'+scannedBottleType
     content_type = 'image/jpeg'
     headers = {'content-type': content_type}
-    img = cv2.imread('temp.jpg')
+    img = cv2.imread('./static/temp.jpg')
     _, img_encoded = cv2.imencode('.jpg', img)
     response = requests.post(addr, data=img_encoded.tostring(), headers=headers)
-    verified = response.json()
+    verified = response.json()['message']
     camera.close()
     if (verified):
         return acceptBottlePage()
@@ -204,24 +186,11 @@ def fail():
 
 
 def openBottomLid():
-    sleep(1)
-    lidPIN = 5
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(lidPIN, GPIO.OUT)
-    lid = GPIO.PWM(lidPIN, 50)
-    lid.start(2.5)
-    lid.ChangeDutyCycle(9)
+    pi.set_servo_pulsewidth(5, 2500)
     sleep(1)
 
 def closeBottomLid():
-    sleep(1)
-    lidPIN = 5
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(lidPIN, GPIO.OUT)
-    lid = GPIO.PWM(lidPIN, 50)
-    lid.start(9)
-    lid.ChangeDutyCycle(2.5)
-    sleep(1)
+    pi.set_servo_pulsewidth(5, 500)
 
 if __name__ == '__main__':
     app.run(host = '192.168.1.2')
