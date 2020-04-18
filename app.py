@@ -9,7 +9,7 @@ import cv2
 
 app = Flask(__name__)
 
-r = requests.post("http://192.168.1.6:8080/rest/automats/addAutomat",
+r = requests.post("http://recyclingprojectsirius.herokuapp.com/rest/automats/addAutomat",
                   json={"id": "automat1","overallVolume":10.0, "capacity": 100, "active": "true", "numberOfBottles": 0,
                         "location": {"province": "Ankara", "district": "Cankaya", "neighborhood": "Sogutozu",
                                      "latitude": 39.98, "longitude": 32.75}, "baseConnection": None})
@@ -28,10 +28,10 @@ pi = pigpio.pi()
 def welcome_page():
     r = None
     try:
-        r = requests.get("http://192.168.1.6:8080/rest/automats/automat1")
+        r = requests.get("http://recyclingprojectsirius.herokuapp.com/rest/automats/automat1")
     except requests.exceptions.RequestException:
         return render_template('cannotconnectautomat.html')
-    requests.post("http://192.168.1.8:8080/connections/directlyCloseConnection/automat1")
+    requests.post("http://recyclingprojectsirius.herokuapp.com/connections/directlyCloseConnection/automat1")
     address = r.json()['location']
     value = 100 - int(r.json()['capacity'])
     color = ""
@@ -56,7 +56,7 @@ def welcome_page():
 
 @app.route('/connected/<usermail>')
 def connection_page(usermail):
-    user = requests.get("http://192.168.1.6:8080/rest/users/" + usermail)
+    user = requests.get("http://recyclingprojectsirius.herokuapp.com/rest/users/" + usermail)
     name = user.json()['name']
     surname = user.json()['surname']
     balance = user.json()['balance']
@@ -68,7 +68,7 @@ def connection_page(usermail):
 
 @app.route('/scannedBarcode/<barcode>')
 def barcodeScanned(barcode):
-    bottle = requests.get("http://192.168.1.6:8080/rest/bottles/"+barcode)
+    bottle = requests.get("http://recyclingprojectsirius.herokuapp.com/rest/bottles/"+barcode)
     global scannedBottleBarcode
     scannedBottleBarcode = barcode
     global scannedBottlePoint
@@ -115,7 +115,7 @@ def verifyBottle():
     camera.capture('./static/temp.jpg')
     camera.stop_preview()
     global scannedBottleType
-    addr = 'http://192.168.1.6:5000'+scannedBottleType
+    addr = 'http://192.168.1.3:5000'+scannedBottleType
     content_type = 'image/jpeg'
     headers = {'content-type': content_type}
     img = cv2.imread('./static/temp.jpg')
@@ -137,11 +137,11 @@ def acceptBottlePage():
     while (request_counter < 5):
         try:
             update_balance = requests.put(
-                "http://192.168.1.6:8080/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint))
+                "http://recyclingprojectsirius.herokuapp.com/rest/users/updateBalance/" + connectedUser + "/" + str(scannedBottlePoint))
             change_capacity = requests.put(
-                "http://192.168.1.6:8080/rest/automats/changeCapacity/automat1/" + scannedBottleBarcode)
+                "http://recyclingprojectsirius.herokuapp.com/rest/automats/changeCapacity/automat1/" + scannedBottleBarcode)
             send_verified = requests.post(
-                "http://192.168.1.6:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
+                "http://recyclingprojectsirius.herokuapp.com/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/1")
             if change_capacity.json() and update_balance and send_verified:
                 return success()
         except requests.exceptions.RequestException:
@@ -170,7 +170,7 @@ def declineBottlePage():
     while (request_counter < 5):
         try:
             sendNotVerified = requests.post(
-                "http://192.168.1.6:8080/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/0")
+                "http://recyclingprojectsirius.herokuapp.com/connections/bottleVerification/" + connectedUser + "/automat1/" + scannedBottleBarcode + "/0")
             if (sendNotVerified.json()):
                 return fail()
         except requests.exceptions.RequestException:
