@@ -28,19 +28,19 @@
 
             recognition.onresult = function (event) {
                 console.log(event.results[0][0].transcript);
-                if(event.results[0][0].transcript.toString().toLowerCase()=="yeni işlem"){
+                if (event.results[0][0].transcript.toString().toLowerCase() == "yeni işlem") {
                     newTransaction();
-                }else if(event.results[0][0].transcript.toString().toLowerCase().includes("kapa")){
+                } else if (event.results[0][0].transcript.toString().toLowerCase().includes("kapa")) {
                     closeConnection();
-                }else if(event.results[0][0].transcript.toString().toLowerCase().includes("tekrar")){
+                } else if (event.results[0][0].transcript.toString().toLowerCase().includes("tekrar")) {
                     retryWithSameBarcode();
-                }else{
+                } else {
                     sr();
                 }
             }
 
             recognition.onspeechend = function (event) {
-                    recognition.stop();
+                recognition.stop();
             }
 
             recognition.onnomatch = function (event) {
@@ -51,6 +51,7 @@
                 sr();
             }
         }
+
         function waitForResultandClose() {
             var settings = {
                 "async": true,
@@ -63,23 +64,21 @@
                 if (response.toString() === "true") {
                     window.location.href = "/";
                 } else {
-                    if(ctr<5){
+                    if (ctr < 5) {
                         ctr++;
-                        setTimeout(waitForResultandClose,1000);
-                    }
-                    else{
+                        setTimeout(waitForResultandClose, 1000);
+                    } else {
                         alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
-
+                        window.location.href = "/";
                     }
                 }
             }).fail(function () {
-                    if(ctr<5){
-                        ctr++;
-                        setTimeout(waitForResultandClose,1000);
-                    }
-                    else{
-                        window.location.href = "/";
-                    }
+                if (ctr < 5) {
+                    ctr++;
+                    setTimeout(waitForResultandClose, 1000);
+                } else {
+                    window.location.href = "/";
+                }
             });
         }
 
@@ -95,23 +94,21 @@
                 if (response.toString() === "true") {
                     window.location.href = "/connected/maymayan@etu.edu.tr";
                 } else {
-                    if(ctr<5){
+                    if (ctr < 5) {
                         ctr++;
-                        setTimeout(waitForResultandNewTr,1000);
-                    }
-                    else{
+                        setTimeout(waitForResultandNewTr, 1000);
+                    } else {
                         alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
-
+                        window.location.href = "/";
                     }
                 }
             }).fail(function () {
-                    if(ctr<5){
-                        ctr++;
-                        setTimeout(waitForResultandNewTr,1000);
-                    }
-                    else{
-                        window.location.href = "/";
-                    }
+                if (ctr < 5) {
+                    ctr++;
+                    setTimeout(waitForResultandNewTr, 1000);
+                } else {
+                    window.location.href = "/";
+                }
             });
         }
 
@@ -125,25 +122,23 @@
 
             $.ajax(settings).done(function (response) {
                 if (response.toString() === "true") {
-                     window.location.href = "/closeCoverOnFail/{{ barcode }}";
+                    window.location.href = "/closeCoverOnFail/{{ barcode }}";
                 } else {
-                    if(ctr<5){
+                    if (ctr < 5) {
                         ctr++;
-                        setTimeout(waitForResultandNewTr,1000);
-                    }
-                    else{
+                        setTimeout(waitForResultandNewTr, 1000);
+                    } else {
                         alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
-
+                        window.location.href = "/";
                     }
                 }
             }).fail(function () {
-                    if(ctr<5){
-                        ctr++;
-                        setTimeout(waitForResultandNewTr,1000);
-                    }
-                    else{
-                        window.location.href = "/";
-                    }
+                if (ctr < 5) {
+                    ctr++;
+                    setTimeout(waitForResultandNewTr, 1000);
+                } else {
+                    window.location.href = "/";
+                }
             });
         }
 
@@ -277,7 +272,8 @@
 
 
 <h1 style="text-align: center"><img src="../static/cross.png" width="50" height="50"> <br>Üzgünüm</h1>
-<h4 style="text-align: center">Barkodunu okuttuğunuz şişe ve görüntü eşleşmemektedir.<br> Şişenizi hazneden alabilirsiniz. </h4>
+<h4 style="text-align: center">Barkodunu okuttuğunuz şişe ve görüntü eşleşmemektedir.<br> Şişenizi hazneden
+    alabilirsiniz. </h4>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <br>
 <br>

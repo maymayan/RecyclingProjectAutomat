@@ -115,7 +115,7 @@ def verifyBottle():
     camera.capture('./static/temp.jpg')
     camera.stop_preview()
     global scannedBottleType
-    addr = 'http://192.168.1.3:5000'+scannedBottleType
+    addr = 'http://192.168.1.3:5000/'+scannedBottleType
     content_type = 'image/jpeg'
     headers = {'content-type': content_type}
     img = cv2.imread('./static/temp.jpg')
