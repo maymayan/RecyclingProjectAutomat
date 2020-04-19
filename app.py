@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 r = requests.post("http://recyclingprojectsirius.herokuapp.com/rest/automats/addAutomat",
                   json={"id": "automat1","overallVolume":10.0, "capacity": 100, "active": "true", "numberOfBottles": 0,
-                        "location": {"province": "Ankara", "district": "Cankaya", "neighborhood": "Sogutozu",
+                        "location": {"province": "Ankara", "district": "yenimahalle", "neighborhood": "Sentepe",
                                      "latitude": 39.98, "longitude": 32.75}, "baseConnection": None})
 
 qr= pyqrcode.create("automat1")
@@ -32,6 +32,7 @@ def welcome_page():
     except requests.exceptions.RequestException:
         return render_template('cannotconnectautomat.html')
     requests.post("http://recyclingprojectsirius.herokuapp.com/connections/directlyCloseConnection/automat1")
+    closeFirst()
     address = r.json()['location']
     value = 100 - int(r.json()['capacity'])
     color = ""
@@ -74,7 +75,12 @@ def barcodeScanned(barcode):
     global scannedBottlePoint
     scannedBottlePoint = bottle.json()["price"]
     global scannedBottleName
-    scannedBottleName = bottle.json()["name"] + " " + bottle.json()["type"]
+    if(bottle.json()["type"] == 'glass'):
+        scannedBottleName = bottle.json()["name"] + " cam"
+    elif(bottle.json()["type"] == 'tin'):
+        scannedBottleName = bottle.json()["name"] + " teneke"
+    elif(bottle.json()["type"] == 'plastic'):
+        scannedBottleName = bottle.json()["name"] + " plastik"
     global scannedBottleType
     scannedBottleType = bottle.json()["type"]
     openFirst()
@@ -84,8 +90,9 @@ def barcodeScanned(barcode):
 def openFirst():
     sleep(1)
     pi.set_servo_pulsewidth(6, 1500)
-
-
+def closeFirst():
+    sleep(1)
+    pi.set_servo_pulsewidth(6, 570)
 @app.route('/opencover')
 def openTheCover():
     sleep(1)
@@ -96,14 +103,21 @@ def openTheCover():
 @app.route('/closecover')
 def closeTheCover():
     sleep(1)
-    pi.set_servo_pulsewidth(6, 500)
+    pi.set_servo_pulsewidth(6, 570)
     return verifyBottle()
+
+@app.route('/closecoverandhome')
+def closeandHome():
+    sleep(1)
+    pi.set_servo_pulsewidth(6, 570)
+    return redirect('/',302)
+
 
 
 @app.route('/closeCoverOnFail/<barcode>')
 def closeCoverOnFail(barcode):
     sleep(1)
-    pi.set_servo_pulsewidth(6, 500)
+    pi.set_servo_pulsewidth(6, 570)
     return redirect('/scannedBarcode/' + barcode, 302)
 
 
@@ -159,6 +173,7 @@ def success():
     openBottomLid()
     sleep(1)
     closeBottomLid()
+
     return render_template('successpage.html', bottle_type=scannedBottleName, point=scannedBottlePoint,
                            connected_user=connectedUser, barcode=scannedBottleBarcode, automat_id="automat1")
 

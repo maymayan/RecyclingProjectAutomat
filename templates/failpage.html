@@ -62,14 +62,14 @@
 
             $.ajax(settings).done(function (response) {
                 if (response.toString() === "true") {
-                    window.location.href = "/";
+                    window.location.href = "/closecoverandhome";
                 } else {
                     if (ctr < 5) {
                         ctr++;
                         setTimeout(waitForResultandClose, 1000);
                     } else {
                         alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
-                        window.location.href = "/";
+                        window.location.href = "/closecoveronfail/{{ barcode }}";
                     }
                 }
             }).fail(function () {
@@ -92,7 +92,7 @@
 
             $.ajax(settings).done(function (response) {
                 if (response.toString() === "true") {
-                    window.location.href = "/connected/maymayan@etu.edu.tr";
+                    window.location.href = "/connected/{{ connected_user }}";
                 } else {
                     if (ctr < 5) {
                         ctr++;
@@ -268,7 +268,7 @@
         }
     </style>
 </head>
-<body>
+<body onload="sr()">
 
 
 <h1 style="text-align: center"><img src="../static/cross.png" width="50" height="50"> <br>Üzgünüm</h1>
@@ -276,22 +276,18 @@
     alabilirsiniz. </h4>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 <br>
-<br>
-<br>
 <div style="display: inline-block;">
-    <p> Aynı şişe için tekrar denemek için tıklayınız...</p>
+    <p> Aynı şişe için tekrar dene</p>
     <button class="button1" onclick="retryWithSameBarcode()">Tekrar Dene</button>
 </div>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
 <div style="display: inline-block;">
-    <p> Yeni bir şişe okutmak için tıklayınız...</p>
+    <p> Yeni bir şişe okut</p>
     <button class="button1" onclick="newTransaction()">Yeni İşlem</button>
 </div>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
 <div class="center" style="display: inline-block;">
-    <p> Bağlantıyı sonlandırmak için tıklayınız...</p>
+    <p> Bağlantıyı sonlandır.</p>
     <button class="button2" onclick="closeConnection()">Çıkış</button>
 </div>
 </body>
