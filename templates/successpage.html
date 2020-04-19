@@ -9,40 +9,177 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
     <script src="../static/bootstrap/animation.js"></script>
     <script>
+
+        function sr() {
+            var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+            var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList
+            var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
+
+            var recognition = new SpeechRecognition();
+            var speechRecognitionList = new SpeechGrammarList();
+            recognition.grammars = speechRecognitionList;
+            recognition.continuous = true;
+            recognition.lang = 'tr-tr';
+            recognition.interimResults = false;
+
+            recognition.start();
+
+            recognition.onresult = function (event) {
+                console.log(event.results[0][0].transcript);
+                if(event.results[0][0].transcript.toString().toLowerCase()=="yeni işlem"){
+                    newTransaction();
+                }else if(event.results[0][0].transcript.toString().toLowerCase().includes("kapa")){
+                    closeConnection();
+                }else{
+                    sr();
+                }
+            }
+
+            recognition.onspeechend = function (event) {
+                    recognition.stop();
+            }
+
+            recognition.onnomatch = function (event) {
+                sr();
+            }
+
+            recognition.onerror = function (event) {
+                sr();
+            }
+        }
+
+        counter = 0;
+        ctr = 0;
+
+        function waitForResultandClose() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://recyclingprojectsirius.herokuapp.com/connections/waitingForResult/automat1",
+                "method": "GET"
+            }
+
+            $.ajax(settings).done(function (response) {
+                if (response.toString() === "true") {
+                    window.location.href = "/";
+                } else {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandClose,1000);
+                    }
+                    else{
+                        alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
+                        window.location.href ="/";
+                    }
+                }
+            }).fail(function () {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandClose,1000);
+                    }
+                    else{
+                        window.location.href = "/";
+                    }
+            });
+        }
+
+        function waitForResultandNewTr() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://recyclingprojectsirius.herokuapp.com/connections/waitingForResult/automat1",
+                "method": "GET"
+            }
+
+            $.ajax(settings).done(function (response) {
+                if (response.toString() === "true") {
+                    window.location.href = "/connected/maymayan@etu.edu.tr";
+                } else {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandNewTr,1000);
+                    }
+                    else{
+                        alert("Mobil cihazınızın internet bağlantısını kontrol ediniz.");
+                        window.location.href ="/";
+                    }
+                }
+            }).fail(function () {
+                    if(ctr<5){
+                        ctr++;
+                        setTimeout(waitForResultandNewTr,1000);
+                    }
+                    else{
+                        window.location.href = "/";
+                    }
+            });
+        }
         function closeConnection() {
             var settings = {
                 "async": true,
                 "crossDomain": true,
-                "url": "http://localhost:8080/connection/closeConnection/{{ connected_user }}",
+                "url": "http://recyclingprojectsirius.herokuapp.com/connections/closeOrNewTransaction/{{ connected_user }}/{{ automat_id }}/{{ barcode }}/1/0",
                 "method": "POST"
             }
 
             $.ajax(settings).done(function (response) {
-                if (response.toString() === "Closed") {
+                if (response.toString() === "true") {
+                    waitForResultandClose();
+                } else {
+                    counter++;
+                    if (counter < 5) {
+                        setTimeout(closeConnection, 1000);
+                    } else {
+                        alert("Bağlantınız Bulunmamaktadir!");
+                        window.location.href = '/';
+                    }
+                }
+            }).fail(function () {
+                if (counter < 5) {
+                    counter++;
+                    setTimeout(closeConnection, 1000);
+                } else {
                     window.location.href = '/';
                 }
             });
         }
 
+        function newTransaction() {
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://recyclingprojectsirius.herokuapp.com/connections/closeOrNewTransaction/{{ connected_user }}/{{ automat_id }}/{{ barcode }}/1/1",
+                "method": "POST"
+            }
 
+            $.ajax(settings).done(function (response) {
+                if (response.toString() === "true") {
+                    waitForResultandNewTr();
+
+                } else {
+                    if (counter < 5) {
+                        counter++;
+                        setTimeout(newTransaction, 1000);
+
+                    } else {
+                        alert("Bağlantınız Bulunmamaktadir!");
+                        window.location.href = '/';
+                    }
+                }
+            }).fail(function () {
+                if (counter < 5) {
+                    counter++;
+                    setTimeout(newTransaction, 1000);
+                } else {
+                    window.location.href = '/';
+                }
+
+            });
+        }
     </script>
     <style>
         .center {
             align-items: center;
-        }
-
-        .button {
-            background-color: #4CAF50; /* Green */
-            border: none;
-            color: white;
-            padding: 16px 32px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            transition-duration: 0.4s;
-            cursor: pointer;
         }
 
         .button1 {
@@ -71,24 +208,21 @@
         }
     </style>
 </head>
-<body>
+<body onload="sr()">
 
 
-<h1 style="color: white;background-color: green;text-align: center">Tebrikler</h1>
+<h1 style="text-align: center"><img src="../static/greentick.png" width="50" height="50"> <br>Tebrikler </h1>
 <h4 style="text-align: center">Bir adet {{ bottle_type }} şişeyi <br>geri dönüşüme kazandırdınız.</h4>
 <h4 style="text-align: center">{{ point }} puan kazandınız.</h4>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
 <div style="display: inline-block;">
-    <p> Yeni bir şişe okutmak için tıklayınız...</p>
-    <form action="../connected/{{ connected_user }}">
-        <button class="button1">Yeni İşlem</button>
-    </form>
+    <p> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Yeni bir şişe okutmak <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;için tıklayınız...</p>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button class="button1" onclick="newTransaction()">Yeni İşlem</button>
 </div>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 
 <div class="center" style="display: inline-block;">
-    <p> Bağlantıyı sonlandırmak için tıklayınız...</p>
+    <p> Bağlantıyı sonlandırmak<br> için tıklayınız...</p>
     <button class="button2" onclick="closeConnection()">Çıkış</button>
 </div>
 </body>

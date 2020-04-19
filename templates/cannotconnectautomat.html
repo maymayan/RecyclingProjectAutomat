@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Failure</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
+    <script src="../static/bootstrap/jquery.min.js"></script>
+    <script src="../static/bootstrap/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:700,900" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="../css/font-awesome.min.css"/>
+    <link type="text/css" rel="stylesheet" href="../css/style.css"/>
+    <script>
+        function f() {
+            ctr = 0;
+            a = false;
+            var settings = {
+                "async": true,
+                "crossDomain": true,
+                "url": "http://recyclingprojectsirius.herokuapp.com/rest/automats/automat1",
+                "method": "GET"
+            }
+            $.ajax(settings).done(function (response) {
+                window.location = '/';
+
+            }).fail(function () {
+                setTimeout(f, 1000);
+            });
+
+        }
+    </script>
+</head>
+
+<body onload="f()">
+
+<div id="notfound">
+    <div class="notfound-bg"></div>
+    <div class="notfound">
+        <h1 style="color: white;text-align: center">Üzgünüm</h1>
+        <br>
+        <br>
+        <br>
+        <h2>Otomatımız şu anda <br> hizmet verememektedir</h2>
+    </div>
+</div>
+</body>
+
+
+</html>

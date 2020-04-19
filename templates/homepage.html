@@ -42,19 +42,32 @@
 
     </style>
     <script>
+        counter = 0;
         function verifyConnection() {
             var settings = {
                 "async": true,
                 "crossDomain": true,
-                "url": "http://localhost:8080/connection/getConnectedUser/{{ automat_id }}",
+                "url": "http://recyclingprojectsirius.herokuapp.com/connections/getConnectedUser/{{ automat_id }}",
                 "method": "GET"
             }
 
             $.ajax(settings).done(function (response) {
                 if (response.length > 0) {
                     window.location.href = '/connected/' + response;
+                } else {
+                    alert("Profilinize erişilemedi. Lütfen QR Kodu okuttuğunuzdan ve internet bağlantınız olduğundan emin olunuz!");
                 }
-            });
+            }).fail(function () {
+                    counter++;
+                    if (counter < 5) {
+                        setTimeout(verifyConnection, 1000);
+                    } else {
+                        alert("Üzgünüm. Şu anda sunucu ile bağlantı kurmakta problem yaşanıyor. Lütfen bekleyiniz veya daha sonra tekrar deneyiniz!");
+                        window.location.href = '/';
+                    }
+
+                }
+            );
         }
 
     </script>
@@ -68,16 +81,16 @@
 <div class="center">
     <h3> HOŞGELDİNİZ</h3>
     <p align="center">
-        {{ address_street }} Street
-        <br>
-        No: {{ address_no }}
-        <br>
         {{ address_neighborhood }}
+        <br>
+        {{ address_district }}
+        <br>
+        {{ address_province }}
 
     </p>
     <br>
 </div>
-<img align="right" src="./static/qrcode.png" width="50" height="50">
+<img align="right" src="./static/qrcode.svg" width="50" height="50">
 
 
 <div align="right">

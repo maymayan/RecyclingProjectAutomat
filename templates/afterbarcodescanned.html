@@ -8,6 +8,45 @@
     <script src="../static/bootstrap/bootstrap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/2.0.2/anime.min.js"></script>
     <script src="../static/bootstrap/animation.js"></script>
+    <script>
+        function sr() {
+            var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
+            var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList
+            var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
+
+            var recognition = new SpeechRecognition();
+            var speechRecognitionList = new SpeechGrammarList();
+            recognition.grammars = speechRecognitionList;
+            recognition.continuous = true;
+            recognition.lang = 'tr-tr';
+            recognition.interimResults = false;
+
+            recognition.start();
+
+            recognition.onresult = function (event) {
+                console.log(event.results[0][0].transcript);
+                if(event.results[0][0].transcript.toString().toLowerCase()=="tamam"){
+                    window.location.href = '/closecover';
+                }else if(event.results[0][0].transcript.toString().toLowerCase()=="aç"){
+                    window.location.href = '/opencover';
+                }else{
+                    sr();
+                }
+            }
+
+            recognition.onspeechend = function (event) {
+                    recognition.stop();
+            }
+
+            recognition.onnomatch = function (event) {
+                sr();
+            }
+
+            recognition.onerror = function (event) {
+                sr();
+            }
+        }
+    </script>
     <style>
 
         floating {
@@ -73,16 +112,18 @@
 
     </style>
 </head>
-<body>
+<body onload="sr()">
 <div class="center">
     <h3>Lütfen şişenizi hazneye yerleştirip "Tamam" butonuna basınız
+        <br>
+        veya "Tamam" diyiniz
         <floating>...</floating>
     </h3>
     <br>
     <img src="../static/cover.gif" width="100px" height="60px">
 </div>
 <br>
-<h6 align="center" style="color:red">(Eğer kapak açılmadı ise "AÇ" butonuna basınız)</h6>
+<h6 align="center" style="color:red">(Eğer kapak açılmadı ise "AÇ" butonuna basınız veya "Aç" diyiniz)</h6>
 
 <div align="center">
     <form style="display:inline-block;vertical-align: middle;" action="../closecover">
